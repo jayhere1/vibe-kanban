@@ -26,6 +26,10 @@ pub struct Issue {
     pub status_id: Uuid,
     pub title: String,
     pub description: Option<String>,
+    /// Markdown spelling out the acceptance criteria for this card.
+    /// Surfaced as a dedicated UI section in this fork; consumed by the
+    /// agent-loop daemon as the task's success contract.
+    pub acceptance_criteria: Option<String>,
     pub priority: Option<IssuePriority>,
     pub start_date: Option<DateTime<Utc>>,
     pub target_date: Option<DateTime<Utc>>,
@@ -66,6 +70,7 @@ pub struct CreateIssueRequest {
     pub status_id: Uuid,
     pub title: String,
     pub description: Option<String>,
+    pub acceptance_criteria: Option<String>,
     pub priority: Option<IssuePriority>,
     pub start_date: Option<DateTime<Utc>>,
     pub target_date: Option<DateTime<Utc>>,
@@ -96,6 +101,12 @@ pub struct UpdateIssueRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub description: Option<Option<String>>,
+    #[serde(
+        default,
+        deserialize_with = "some_if_present",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub acceptance_criteria: Option<Option<String>>,
     #[serde(
         default,
         deserialize_with = "some_if_present",

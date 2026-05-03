@@ -53,6 +53,12 @@ export interface KanbanIssueTag extends IssueTagBase {
 export interface IssueFormData {
   title: string;
   description: string | null;
+  /**
+   * Markdown acceptance criteria. Surfaces as a dedicated textarea below
+   * the description editor; consumed by the agent-loop daemon as the
+   * task's success contract.
+   */
+  acceptanceCriteria: string | null;
   statusId: string;
   priority: IssuePriority | null;
   assigneeIds: string[];
@@ -482,6 +488,32 @@ export function KanbanIssuePanel({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Acceptance criteria — agent-loop reads this as the task contract */}
+          <div className="mt-base px-base">
+            <label
+              htmlFor="kanban-acceptance-criteria"
+              className="text-xs font-medium text-low uppercase tracking-wide"
+            >
+              Acceptance criteria
+            </label>
+            <textarea
+              id="kanban-acceptance-criteria"
+              className={cn(
+                'mt-half w-full resize-y rounded border border-default',
+                'bg-panel/40 px-base py-half text-sm text-normal',
+                'placeholder:text-low/70',
+                'min-h-[3rem]',
+                isSubmitting && 'opacity-50'
+              )}
+              placeholder="Markdown — what does “done” look like? Used by agent-loop as the task contract."
+              value={formData.acceptanceCriteria ?? ''}
+              onChange={(e) =>
+                onFormChange('acceptanceCriteria', e.target.value || null)
+              }
+              disabled={isSubmitting}
+            />
           </div>
         </div>
 

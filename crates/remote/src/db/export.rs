@@ -101,6 +101,7 @@ impl ExportRepository {
                 status_id           AS "status_id!: Uuid",
                 title               AS "title!",
                 description         AS "description?",
+                acceptance_criteria AS "acceptance_criteria?",
                 priority            AS "priority: IssuePriority",
                 start_date          AS "start_date?: DateTime<Utc>",
                 target_date         AS "target_date?: DateTime<Utc>",

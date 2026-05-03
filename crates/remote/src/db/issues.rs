@@ -148,6 +148,7 @@ impl IssueRepository {
                 i.status_id           AS "status_id!: Uuid",
                 i.title               AS "title!",
                 i.description         AS "description?",
+                i.acceptance_criteria AS "acceptance_criteria?",
                 i.priority            AS "priority: IssuePriority",
                 i.start_date          AS "start_date?: DateTime<Utc>",
                 i.target_date         AS "target_date?: DateTime<Utc>",
@@ -280,6 +281,7 @@ impl IssueRepository {
                 status_id           AS "status_id!: Uuid",
                 title               AS "title!",
                 description         AS "description?",
+                acceptance_criteria AS "acceptance_criteria?",
                 priority            AS "priority: IssuePriority",
                 start_date          AS "start_date?: DateTime<Utc>",
                 target_date         AS "target_date?: DateTime<Utc>",
@@ -329,6 +331,7 @@ impl IssueRepository {
         status_id: Uuid,
         title: String,
         description: Option<String>,
+        acceptance_criteria: Option<String>,
         priority: Option<IssuePriority>,
         start_date: Option<DateTime<Utc>>,
         target_date: Option<DateTime<Utc>>,
@@ -347,12 +350,12 @@ impl IssueRepository {
             Issue,
             r#"
             INSERT INTO issues (
-                id, project_id, status_id, title, description, priority,
-                start_date, target_date, completed_at, sort_order,
+                id, project_id, status_id, title, description, acceptance_criteria,
+                priority, start_date, target_date, completed_at, sort_order,
                 parent_issue_id, parent_issue_sort_order, extension_metadata,
                 creator_user_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING
                 id                  AS "id!: Uuid",
                 project_id          AS "project_id!: Uuid",
@@ -361,6 +364,7 @@ impl IssueRepository {
                 status_id           AS "status_id!: Uuid",
                 title               AS "title!",
                 description         AS "description?",
+                acceptance_criteria AS "acceptance_criteria?",
                 priority            AS "priority: IssuePriority",
                 start_date          AS "start_date?: DateTime<Utc>",
                 target_date         AS "target_date?: DateTime<Utc>",
@@ -378,6 +382,7 @@ impl IssueRepository {
             status_id,
             title,
             description,
+            acceptance_criteria,
             priority as Option<IssuePriority>,
             start_date,
             target_date,
@@ -411,6 +416,7 @@ impl IssueRepository {
         status_id: Option<Uuid>,
         title: Option<String>,
         description: Option<Option<String>>,
+        acceptance_criteria: Option<Option<String>>,
         priority: Option<Option<IssuePriority>>,
         start_date: Option<Option<DateTime<Utc>>>,
         target_date: Option<Option<DateTime<Utc>>>,
@@ -427,6 +433,8 @@ impl IssueRepository {
         // This preserves the distinction between "don't update" and "set to NULL"
         let update_description = description.is_some();
         let description_value = description.flatten();
+        let update_acceptance_criteria = acceptance_criteria.is_some();
+        let acceptance_criteria_value = acceptance_criteria.flatten();
         let update_priority = priority.is_some();
         let priority_value = priority.flatten();
         let update_start_date = start_date.is_some();
@@ -448,16 +456,17 @@ impl IssueRepository {
                 status_id = COALESCE($1, status_id),
                 title = COALESCE($2, title),
                 description = CASE WHEN $3 THEN $4 ELSE description END,
-                priority = CASE WHEN $5 THEN $6 ELSE priority END,
-                start_date = CASE WHEN $7 THEN $8 ELSE start_date END,
-                target_date = CASE WHEN $9 THEN $10 ELSE target_date END,
-                completed_at = CASE WHEN $11 THEN $12 ELSE completed_at END,
-                sort_order = COALESCE($13, sort_order),
-                parent_issue_id = CASE WHEN $14 THEN $15 ELSE parent_issue_id END,
-                parent_issue_sort_order = CASE WHEN $16 THEN $17 ELSE parent_issue_sort_order END,
-                extension_metadata = COALESCE($18, extension_metadata),
+                acceptance_criteria = CASE WHEN $5 THEN $6 ELSE acceptance_criteria END,
+                priority = CASE WHEN $7 THEN $8 ELSE priority END,
+                start_date = CASE WHEN $9 THEN $10 ELSE start_date END,
+                target_date = CASE WHEN $11 THEN $12 ELSE target_date END,
+                completed_at = CASE WHEN $13 THEN $14 ELSE completed_at END,
+                sort_order = COALESCE($15, sort_order),
+                parent_issue_id = CASE WHEN $16 THEN $17 ELSE parent_issue_id END,
+                parent_issue_sort_order = CASE WHEN $18 THEN $19 ELSE parent_issue_sort_order END,
+                extension_metadata = COALESCE($20, extension_metadata),
                 updated_at = NOW()
-            WHERE id = $19
+            WHERE id = $21
             RETURNING
                 id                  AS "id!: Uuid",
                 project_id          AS "project_id!: Uuid",
@@ -466,6 +475,7 @@ impl IssueRepository {
                 status_id           AS "status_id!: Uuid",
                 title               AS "title!",
                 description         AS "description?",
+                acceptance_criteria AS "acceptance_criteria?",
                 priority            AS "priority: IssuePriority",
                 start_date          AS "start_date?: DateTime<Utc>",
                 target_date         AS "target_date?: DateTime<Utc>",
@@ -482,6 +492,8 @@ impl IssueRepository {
             title,
             update_description,
             description_value,
+            update_acceptance_criteria,
+            acceptance_criteria_value,
             update_priority,
             priority_value as Option<IssuePriority>,
             update_start_date,
@@ -567,6 +579,7 @@ impl IssueRepository {
             None,
             None,
             None,
+            None,
         )
         .await?;
 
@@ -617,6 +630,7 @@ impl IssueRepository {
                 &mut *conn,
                 issue_id,
                 Some(target_status_id),
+                None,
                 None,
                 None,
                 None,

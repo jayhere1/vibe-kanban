@@ -261,6 +261,7 @@ export function KanbanIssuePanelContainer({
     () => ({
       title: '',
       description: null,
+      acceptanceCriteria: null,
       statusId: defaultStatusId,
       priority: kanbanCreateDefaultPriority ?? null,
       assigneeIds: [...(kanbanCreateDefaultAssigneeIds ?? [])],
@@ -380,6 +381,18 @@ export function KanbanIssuePanelContainer({
       setTimeout(() => setDescriptionSaveStatus('idle'), 1500);
     }
   }, 500);
+
+  // Debounced save for acceptance_criteria changes (mirrors description).
+  const { debounced: debouncedSaveAcceptanceCriteria } = useDebouncedCallback(
+    (acceptanceCriteria: string | null) => {
+      if (selectedKanbanIssueId && !kanbanCreateMode) {
+        updateIssue(selectedKanbanIssueId, {
+          acceptance_criteria: acceptanceCriteria,
+        });
+      }
+    },
+    500
+  );
 
   // Reset save status only when switching to a different issue or mode
   useEffect(() => {
@@ -587,6 +600,9 @@ export function KanbanIssuePanelContainer({
         nextCreateFormData = {
           title: composerDraft.title,
           description: composerDraft.description ?? null,
+          acceptanceCriteria:
+            (composerDraft as { acceptanceCriteria?: string | null })
+              .acceptanceCriteria ?? createModeDefaults.acceptanceCriteria,
           statusId: composerDraft.statusId ?? createModeDefaults.statusId,
           priority:
             composerDraft.priority === undefined
@@ -756,6 +772,12 @@ export function KanbanIssuePanelContainer({
         if (!hasPendingAttachments) {
           debouncedSaveDescription(value as string | null);
         }
+      } else if (field === 'acceptanceCriteria') {
+        dispatchFormState({
+          type: 'setEditAcceptanceCriteria',
+          acceptanceCriteria: value as string | null,
+        });
+        debouncedSaveAcceptanceCriteria(value as string | null);
       } else if (field === 'statusId') {
         // Status changes go through the command bar status selection
         openStatusSelection(projectId, [selectedKanbanIssueId]);
@@ -835,6 +857,7 @@ export function KanbanIssuePanelContainer({
           status_id: displayData.statusId,
           title: displayData.title,
           description: displayData.description,
+          acceptance_criteria: displayData.acceptanceCriteria,
           priority: displayData.priority,
           sort_order: minSortOrder - 1,
           start_date: null,
