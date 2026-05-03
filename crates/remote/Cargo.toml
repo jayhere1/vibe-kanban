@@ -10,11 +10,17 @@ path = "src/bin/generate_types.rs"
 
 [features]
 default = []
-vk-billing = ["dep:billing"]
+# vk-billing requires access to BloopAI's private billing crate, which this
+# fork does not vendor. The cfg(not(feature = "vk-billing")) branches in
+# billing.rs already provide no-op shims, so the feature simply stays
+# unbuildable here.
+# vk-billing = ["dep:billing"]
 
 [dependencies]
-# private crate for billing functionality
-billing = { git = "ssh://git@github.com/BloopAI/vibe-kanban-private", branch = "main", package = "billing", optional = true }
+# Upstream uses an optional `billing` git dep against a private repo; we
+# don't have access, so it's commented out. Re-add if you mirror the
+# private crate locally.
+# billing = { git = "ssh://git@github.com/BloopAI/vibe-kanban-private", branch = "main", package = "billing", optional = true }
 
 anyhow = "1.0"
 axum = { version = "0.8.4", features = ["macros", "multipart", "ws"] }

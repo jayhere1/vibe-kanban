@@ -9,6 +9,8 @@ interface EditTextState {
   hasLocalTitleEdit: boolean;
   description: string | null;
   hasLocalDescriptionEdit: boolean;
+  acceptanceCriteria: string | null;
+  hasLocalAcceptanceCriteriaEdit: boolean;
 }
 
 export interface KanbanIssuePanelFormState {
@@ -21,6 +23,7 @@ export interface KanbanIssuePanelFormState {
 interface SelectedIssueSnapshot {
   title: string;
   description: string | null;
+  acceptance_criteria: string | null;
   status_id: string;
   priority: IssuePriority | null;
 }
@@ -45,13 +48,19 @@ type KanbanIssuePanelFormAction =
       hasRestoredFromScratch: boolean;
     }
   | { type: 'setEditTitle'; title: string }
-  | { type: 'setEditDescription'; description: string | null };
+  | { type: 'setEditDescription'; description: string | null }
+  | {
+      type: 'setEditAcceptanceCriteria';
+      acceptanceCriteria: string | null;
+    };
 
 const EMPTY_EDIT_TEXT_STATE: EditTextState = {
   title: '',
   hasLocalTitleEdit: false,
   description: null,
   hasLocalDescriptionEdit: false,
+  acceptanceCriteria: null,
+  hasLocalAcceptanceCriteriaEdit: false,
 };
 
 export function createBlankCreateFormData(
@@ -61,6 +70,7 @@ export function createBlankCreateFormData(
   return {
     title: '',
     description: null,
+    acceptanceCriteria: null,
     statusId: defaultStatusId,
     priority: null,
     assigneeIds: [],
@@ -142,6 +152,15 @@ export function kanbanIssuePanelFormReducer(
           hasLocalDescriptionEdit: true,
         },
       };
+    case 'setEditAcceptanceCriteria':
+      return {
+        ...state,
+        editTextState: {
+          ...state.editTextState,
+          acceptanceCriteria: action.acceptanceCriteria,
+          hasLocalAcceptanceCriteriaEdit: true,
+        },
+      };
     default:
       return state;
   }
@@ -184,6 +203,9 @@ export function selectDisplayData({
     description: state.editTextState.hasLocalDescriptionEdit
       ? state.editTextState.description
       : (selectedIssue?.description ?? null),
+    acceptanceCriteria: state.editTextState.hasLocalAcceptanceCriteriaEdit
+      ? state.editTextState.acceptanceCriteria
+      : (selectedIssue?.acceptance_criteria ?? null),
     statusId: selectedIssue?.status_id ?? '',
     priority: selectedIssue?.priority ?? null,
     assigneeIds: currentAssigneeIds,
@@ -209,6 +231,8 @@ export function selectIsCreateDraftDirty({
     state.createFormData.title !== createModeDefaults.title ||
     (state.createFormData.description ?? null) !==
       createModeDefaults.description ||
+    (state.createFormData.acceptanceCriteria ?? null) !==
+      createModeDefaults.acceptanceCriteria ||
     state.createFormData.statusId !== createModeDefaults.statusId ||
     state.createFormData.priority !== createModeDefaults.priority ||
     !areStringSetsEqual(
